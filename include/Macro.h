@@ -9,3 +9,5 @@
 
 #define GENERATED_BODY()
 #define PROPERTY(...)
+#define CLASS()
+#define END_CLASS()

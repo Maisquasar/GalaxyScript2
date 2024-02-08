@@ -5,6 +5,9 @@
 
 #include <fstream>
 
+#include <cpp_serializer/CppSerializer.h>
+using namespace CppSer;
+
 #include "ScriptComponent.h"
 
 std::unique_ptr<ScriptEngine> ScriptEngine::m_instance;
@@ -93,9 +96,16 @@ bool ScriptEngine::LoadDLL(const std::filesystem::path& dllPath)
 		return false;
 	}
 
-	for (auto& header : m_headers)
+	const auto path = dllPath.parent_path() / "Headers";
+	if (!std::filesystem::exists(path))
+		return false;
+	// Generated/file.dll so parent is Generated
+	for (const std::filesystem::directory_entry& entry : std::filesystem::directory_iterator(path))
 	{
-		ParseHeaderFile(header);
+		if (entry.path().extension() == ".gen")
+		{
+			ParseGenFile(entry.path());
+		}
 	}
 
 	return true;
@@ -112,17 +122,13 @@ void ScriptEngine::FreeDLL()
 #endif
 }
 
-void ScriptEngine::AddHeader(const std::filesystem::path& headerPath)
+void ScriptEngine::ParseGenFile(const std::filesystem::path& headerPath)
 {
-	m_headers.push_back(headerPath);
-}
-
-void ScriptEngine::ParseHeaderFile(const std::filesystem::path& headerPath)
-{
-	std::string className = headerPath.filename().stem().string();
+	Parser parser(headerPath);
+	const std::string className = parser["Class Name"];
 
 	using ScriptConstructor = void* (*)();
-	auto constructor = GetDLLMethod<ScriptConstructor>(m_handle, ("Create_" + className).c_str());
+	const auto constructor = GetDLLMethod<ScriptConstructor>(m_handle, ("Internal_Create_" + className).c_str());
 
 	if (!constructor)
 	{
@@ -130,29 +136,15 @@ void ScriptEngine::ParseHeaderFile(const std::filesystem::path& headerPath)
 		return;
 	}
 	ComponentHandler::RegisterScriptComponent(static_cast<ScriptComponent*>(constructor()));
+	const auto scriptInstance = m_scriptInstances[className] = std::make_shared<ScriptInstance>();
 
-	auto scriptInstance = m_scriptInstances[className] = std::make_shared<ScriptInstance>();
+	const int propertySize = parser["Property Size"].As<int>();
+	for (int i = 0; i < propertySize; i++) {
 
-	std::ifstream file(headerPath);
-	if (!file.is_open())
-	{
-		std::cerr << "Failed to open file: " << headerPath << std::endl;
-		return;
-	}
 
-	std::string content((std::istreambuf_iterator<char>(file)),
-		std::istreambuf_iterator<char>());
-
-	std::smatch match;
-
-	std::regex propertyRegex(R"(PROPERTY\(\)\s*(?:class\s+|struct\s+)?((?:\w+::)*\w+(?:\s*<[^;<>]*(?:<(?:[^;<>]*)>)*[^;<>]*>)?\s*[*&]?)\s+(\w+)\s*(?:=\s*[^;]*)?;)");
-	auto begin = std::sregex_iterator(content.begin(), content.end(), propertyRegex);
-	auto end = std::sregex_iterator();
-
-	for (std::sregex_iterator i = begin; i != end; ++i) {
-		match = *i;
-		std::string typeName = match[1].str(); // Type of the variable, including namespace and template if any
-		std::string varName = match[2].str(); // Name of the variable
+		parser.PushDepth();
+		const std::string typeName = parser["Type"];
+		const std::string varName = parser["Name"];
 
 		Property property;
 		property.propertyName = varName;
@@ -160,11 +152,10 @@ void ScriptEngine::ParseHeaderFile(const std::filesystem::path& headerPath)
 
 		Variable variable;
 		variable.property = property;
-		variable.getterMethod = GetDLLMethod<GetterMethod>(m_handle, ("Get_" + className + "_" + property.propertyName).c_str());
-		variable.setterMethod = GetDLLMethod<SetterMethod>(m_handle, ("Set_" + className + "_" + property.propertyName).c_str());
+		variable.getterMethod = GetDLLMethod<GetterMethod>(m_handle, ("Internal_Get_" + className + "_" + property.propertyName).c_str());
+		variable.setterMethod = GetDLLMethod<SetterMethod>(m_handle, ("Internal_Set_" + className + "_" + property.propertyName).c_str());
 
 		scriptInstance->m_variables[property.propertyName] = variable;
 	}
-
 }
 

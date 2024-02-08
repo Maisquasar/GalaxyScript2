@@ -4,8 +4,10 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <set>
 
 #include "ScriptEngine.h"
+
 
 class PROJECT_API IComponent
 {
@@ -17,7 +19,8 @@ public:
 	virtual ~IComponent() {}
 
 	virtual void* Clone() = 0;
-	virtual	const char* GetComponentName() const = 0;
+	virtual const char* Internal_GetClassName() const { return "IComponent"; }
+	virtual std::set<const char*> Internal_GetClassNames() const { return {}; }
 
 };
 
@@ -30,19 +33,26 @@ public:
 	ScriptComponent(ScriptComponent&&) noexcept = default;
 	~ScriptComponent() override {}
 
-	virtual void* Clone() override { return nullptr; };
-	virtual	const char* GetComponentName() const override { return ""; };
+	virtual void* Clone() override { return nullptr; }
+
+	virtual const char* Internal_GetClassName() const { return "ScriptComponent"; }
+	virtual std::set<const char*> Internal_GetClassNames() const
+	{
+		std::set<const char*> names = IComponent::Internal_GetClassNames();
+		names.insert(ScriptComponent::Internal_GetClassName());
+		return names;
+	}
 
 	template<typename T>
 	inline T* GetVariable(const std::string& variableName)
 	{
-		return ScriptEngine::Get()->GetScriptVariable<T>(this, GetComponentName(), variableName);
+		return ScriptEngine::Get()->GetScriptVariable<T>(this, Internal_GetClassName(), variableName);
 	}
 
 	template<typename T>
 	inline void SetVariable(const std::string& variableName, T value)
 	{
-		return ScriptEngine::Get()->SetScriptVariable<T>(this, GetComponentName(), variableName, &value);
+		return ScriptEngine::Get()->SetScriptVariable<T>(this, Internal_GetClassName(), variableName, &value);
 	}
 
 	std::unordered_map<std::string, Variable> GetAllVariableInfo() const;
@@ -52,29 +62,18 @@ class ComponentHandler
 {
 public:
 	template<typename T>
-	static void RegisterComponent()
-	{
-		m_components.push_back(std::make_shared<T>());
-	}
-
-	template<typename T>
 	static void RegisterScriptComponent(T* component)
 	{
-		m_components.push_back(std::shared_ptr<ScriptComponent>(component));
+		m_components[component->Internal_GetClassName()] = std::shared_ptr<ScriptComponent>(component);
 	}
 
 	static std::shared_ptr<IComponent> CreateWithComponentName(const std::string& name)
 	{
-		for (const auto& component : m_components)
-		{
-			if (component->GetComponentName() == name)
-			{
-				return std::shared_ptr<IComponent>(static_cast<IComponent*>(component->Clone()));
-			}
-		}
-		return nullptr;
+		if (!m_components.contains(name))
+			return nullptr;
+		return std::shared_ptr<IComponent>(static_cast<IComponent*>(m_components.at(name)->Clone()));
 	}
 
 private:
-	static std::vector<std::shared_ptr<IComponent>> m_components;
+	static std::unordered_map<std::string, std::shared_ptr<IComponent>> m_components;
 };

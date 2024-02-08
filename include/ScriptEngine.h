@@ -40,7 +40,7 @@ public:
 		return m_instance.get();
 	}
 private:
-	void ParseHeaderFile(const std::filesystem::path& headerPath);
+	void ParseGenFile(const std::filesystem::path& headerPath);
 
 	template<typename T>
 	inline T* GetScriptVariable(void* scriptComponent, const std::string& scriptName, const std::string& variableName)
@@ -106,6 +106,7 @@ private:
 #endif
 		return T();
 	}
+
 private:
 	friend class ScriptComponent;
 
@@ -113,8 +114,6 @@ private:
 
 	std::set<std::string> m_typeNames;
 	std::filesystem::path m_copyPath = std::filesystem::current_path() / "Dlls";
-
-	std::vector<std::filesystem::path> m_headers;
 
 	std::unordered_map<std::string, std::shared_ptr<ScriptInstance>> m_scriptInstances;
 

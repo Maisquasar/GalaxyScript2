@@ -10,6 +10,7 @@ add_repositories("galaxy-repo https://github.com/GalaxyEngine/xmake-repo")
 
 -- Packages
 add_requires("galaxymath ~1.2")
+add_requires("cpp_serializer")
 add_requires("nativefiledialog-extended")
 
 set_languages("c++20")
@@ -38,4 +39,5 @@ target("GalaxyScript")
     end
 
     add_packages("nativefiledialog-extended")
+    add_packages("cpp_serializer")
 target_end()
