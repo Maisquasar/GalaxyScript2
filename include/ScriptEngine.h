@@ -22,15 +22,9 @@ public:
 
 	static ScriptEngine& CreateScriptEngine();
 
-	// Add a new type with the parse name to the script engine
-	void AddType(const std::string& typeName);
-
 	bool LoadDLL(const std::filesystem::path& dllPath);
 
 	void FreeDLL();
-
-	// Add a header that will be parsed by the script engine
-	void AddHeader(const std::filesystem::path& headerPath);
 
 	static ScriptEngine* Get() {
 		if (!m_instance)
@@ -38,6 +32,14 @@ public:
 			CreateScriptEngine();
 		}
 		return m_instance.get();
+	}
+
+	template<typename T>
+	std::shared_ptr<T> CreateWithClassName(const std::string& name)
+	{
+		if (!m_scriptInstances.contains(name))
+			return nullptr;
+		return std::shared_ptr<T>(static_cast<T*>(m_scriptInstances.at(name)->m_constructor()));
 	}
 private:
 	void ParseGenFile(const std::filesystem::path& headerPath);
@@ -63,6 +65,15 @@ private:
 
 		const auto instance = m_scriptInstances[scriptName];
 		return instance->m_variables;
+	}
+
+	inline std::unordered_map<std::string, CallMethod> GetAllScriptMethodsInfo(const std::string& scriptName)
+	{
+		if (!m_scriptInstances.contains(scriptName))
+			return {};
+
+		const auto instance = m_scriptInstances[scriptName];
+		return instance->m_methods;
 	}
 
 	inline std::unordered_map<std::string, void*> GetAllScriptVariables(void* scriptComponent, const std::string& scriptName)
@@ -94,6 +105,19 @@ private:
 
 		const auto setter = instance->m_variables.at(variableName).setterMethod;
 		setter(scriptComponent, value);
+	}
+
+	inline void CallScriptMethod(void* scriptComponent, const std::string& scriptName, const std::string& methodName)
+	{
+		if (!scriptComponent || !m_scriptInstances.contains(scriptName))
+			return;
+
+		const auto instance = m_scriptInstances[scriptName];
+		if (!instance->m_methods.contains(methodName))
+			return;
+
+		const auto method = instance->m_methods.at(methodName);
+		method(scriptComponent);
 	}
 
 	template<typename T>

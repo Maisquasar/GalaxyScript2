@@ -1,48 +1,62 @@
-#include <any>
-#include <iostream>
+#include "Example.h"
 
+
+#include "../include/ScriptEngine.h"
 #include "ScriptComponent.h"
-#include "ScriptEngine.h"
 
-#ifdef _WIN32
-#define _CRTDBG_MAP_ALLOC
-#include <crtdbg.h>
-#endif // _WIN32
+#include <iostream>
+#include <vector>
+#include <any>
+#include <ranges>
 
 void SaveValues(ScriptComponent* scriptComponent);
 void LoadValues(ScriptComponent* scriptComponent);
 
-int Main()
+void Example::RunExample()
 {
-	auto scriptEngine = ScriptEngine::Get();
+	const auto scriptEngine = ScriptEngine::Get();
 
 	//TODO:
 	const char* dllPath = "D:/Code/Moteurs/ExampleProject/Generate/ExampleProject.dll";
 	const bool loaded = scriptEngine->LoadDLL(dllPath);
 
 	if (!loaded)
-		return 1;
+		return;
 
 	// Create the script
-	auto scriptComponent = std::dynamic_pointer_cast<ScriptComponent>(ComponentHandler::CreateWithComponentName("ExampleClass"));
+	std::shared_ptr<ScriptComponent> scriptComponent = scriptEngine->CreateWithClassName<ScriptComponent>("ExampleClass");
 	if (!scriptComponent)
-		return 1;
+		return;
 
-	auto variables = scriptComponent->GetAllVariableInfo();
+	const auto variables = scriptComponent->GetAllVariableInfo();
 
 	std::cout << "Variables of " << scriptComponent->Internal_GetClassName() << " :" << std::endl;
-	for (auto& variable : variables)
+	for (const auto& variable : variables | std::views::values)
 	{
-		auto property = variable.second.property;
+		auto property = variable.property;
 
 		if (property.propertyType == "std::vector<std::string>")
 		{
 			scriptComponent->SetVariable(property.propertyName, std::vector<std::string> {"Hello", "World"});
 		}
 
-		std::cout << '\t' << variable.second.property.propertyType << " " << variable.second.property.propertyName << std::endl;
+		std::cout << '\t' << variable.property.propertyType << " " << variable.property.propertyName << std::endl;
 	}
+	std::cout << std::endl;
 
+	const auto methods = scriptComponent->GetAllMethodsInfo();
+	std::cout << "Methods of " << scriptComponent->Internal_GetClassName() << " :" << std::endl;
+
+	for (const auto& method : methods)
+	{
+		std::cout << '\t' << method.first << std::endl;
+	}
+	std::cout << std::endl;
+
+	// Call a class method:
+	scriptComponent->CallMethodByName("Method");
+
+	std::cout << "Press enter to HotReload" << std::endl;
 	getchar();
 
 	//TODO Get all variables value
@@ -53,18 +67,24 @@ int Main()
 	scriptEngine->LoadDLL(dllPath);
 
 	//TODO Set all variables value
-	scriptComponent = std::dynamic_pointer_cast<ScriptComponent>(ComponentHandler::CreateWithComponentName("ExampleClass"));
+	scriptComponent = scriptEngine->CreateWithClassName<ScriptComponent>("ExampleClass");
 	LoadValues(scriptComponent.get());
+
+	// Call a class method:
+	scriptComponent->CallMethodByName("Method");
 
 	const auto names = scriptComponent->Internal_GetClassNames();
 	std::cout << std::endl;
 	std::cout << "Inherit class names" << std::endl;
 	for (auto& name : names)
-		std::cout << name << std::endl;
+		std::cout << '\t' << name << std::endl;
 	std::cout << std::endl;
 
-	return 0;
+	return;
+
+
 }
+
 #define SAVE_TYPE(x) if (property.propertyType == #x)\
 	{\
 		const auto value = *scriptComponent->GetVariable<x>(property.propertyName);\
@@ -122,31 +142,7 @@ else LOAD_TYPE(float)
 	}
 }
 
-int main(int argc, char** argv)
+EXAMPLE_API void RandomMethod()
 {
-#ifdef _WIN32
-	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
-	//  TODO: Remove Comments To Break on leaks
-	// |
-	// V
-	//_CrtSetBreakAlloc(863);
-#endif
-	return Main();
+	std::cout << "RandomMethod Called from Script" << std::endl;
 }
-
-
-/*Need:
- * - For the separate project:
- *	- in solution :
- *		- add the engine path to include dir
- *		- add include dir for Generate/Header folder
- *		- HeaderTool to be launched before compilation
- *		- Set Output dir to be on folder Generate
- *	- Use the HeaderTool syntax : CLASS() GENERATED_BODY() PROPERTY() END_CLASS()
- *
- * - For the Engine :
- *	- Base class for components With methods :
- *	    - Internal_GetClassName
- *	    - Internal_GetClassNames
- *	    - Clone
- */

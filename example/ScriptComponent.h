@@ -1,15 +1,13 @@
 #pragma once
-#include "API.h"
 
 #include <memory>
 #include <string>
 #include <vector>
 #include <set>
 
-#include "ScriptEngine.h"
+#include "../include/ScriptEngine.h"
 
-
-class PROJECT_API IComponent
+class IComponent
 {
 public:
 	IComponent() {}
@@ -24,7 +22,7 @@ public:
 
 };
 
-class PROJECT_API ScriptComponent : public IComponent
+class ScriptComponent : public IComponent
 {
 public:
 	ScriptComponent() {}
@@ -55,25 +53,11 @@ public:
 		return ScriptEngine::Get()->SetScriptVariable<T>(this, Internal_GetClassName(), variableName, &value);
 	}
 
+	inline void CallMethodByName(const std::string& methodName)
+	{
+		ScriptEngine::Get()->CallScriptMethod(this, Internal_GetClassName(), methodName);
+	}
+
 	std::unordered_map<std::string, Variable> GetAllVariableInfo() const;
-};
-
-class ComponentHandler
-{
-public:
-	template<typename T>
-	static void RegisterScriptComponent(T* component)
-	{
-		m_components[component->Internal_GetClassName()] = std::shared_ptr<ScriptComponent>(component);
-	}
-
-	static std::shared_ptr<IComponent> CreateWithComponentName(const std::string& name)
-	{
-		if (!m_components.contains(name))
-			return nullptr;
-		return std::shared_ptr<IComponent>(static_cast<IComponent*>(m_components.at(name)->Clone()));
-	}
-
-private:
-	static std::unordered_map<std::string, std::shared_ptr<IComponent>> m_components;
+	std::unordered_map<std::string, CallMethod> GetAllMethodsInfo() const;
 };

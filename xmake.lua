@@ -9,9 +9,7 @@ end
 add_repositories("galaxy-repo https://github.com/GalaxyEngine/xmake-repo")
 
 -- Packages
-add_requires("galaxymath ~1.2")
 add_requires("cpp_serializer")
-add_requires("nativefiledialog-extended")
 
 set_languages("c++20")
 
@@ -19,14 +17,17 @@ set_languages("c++20")
 add_cxflags("/wd4251", {tools = "cl"}) -- class needs to have dll-interface to be used by clients of class
 add_cxflags("-Wall")            -- Enable all commonly used warning flags
 
-set_rundir("Generate/..")
+set_rundir("$(projectdir)")
+set_targetdir("Generate")
 
 target("GalaxyScript")
-    set_kind("binary")
+    set_kind("static")
 
     if (is_plat("windows", "msvc")) then 
         add_cxflags("/permissive")
     end
+
+    add_defines("GALAXY_SCRIPT_EXPORT")
 
     -- Includes --
     add_includedirs("include")
@@ -38,6 +39,30 @@ target("GalaxyScript")
         add_cxflags("/permissive")
     end
 
-    add_packages("nativefiledialog-extended")
     add_packages("cpp_serializer")
+target_end()
+
+target("YourProjectDLL")
+    set_kind("shared")
+
+    add_deps("GalaxyScript")
+    add_includedirs("example")
+    add_files("example/Example.cpp")
+    add_files("example/ScriptComponent.cpp")
+    add_headerfiles("example/**.inl");
+    add_headerfiles("example/**.h");
+
+    add_links("GalaxyScript")
+    add_linkdirs("Generate")
+
+    add_defines("EXAMPLE_EXPORT")
+target_end()
+
+target("YourProjectBinary")
+    set_default(true)
+    set_kind("binary")
+    add_deps("YourProjectDLL")
+
+    add_includedirs("example")
+    add_files("example/main.cpp")
 target_end()

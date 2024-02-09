@@ -8,8 +8,6 @@
 #include <cpp_serializer/CppSerializer.h>
 using namespace CppSer;
 
-#include "ScriptComponent.h"
-
 std::unique_ptr<ScriptEngine> ScriptEngine::m_instance;
 
 ScriptEngine::ScriptEngine()
@@ -25,23 +23,7 @@ ScriptEngine::~ScriptEngine()
 ScriptEngine& ScriptEngine::CreateScriptEngine()
 {
 	m_instance = std::make_unique<ScriptEngine>();
-	m_instance->m_typeNames =
-	{
-		"bool",
-		"int",
-		"float",
-		"double",
-		"string",
-	};
-
 	return *m_instance;
-}
-
-void ScriptEngine::AddType(const std::string& typeName)
-{
-	if (m_typeNames.contains(typeName))
-		return;
-	m_typeNames.insert(typeName);
 }
 
 bool ScriptEngine::LoadDLL(const std::filesystem::path& dllPath)
@@ -64,14 +46,29 @@ bool ScriptEngine::LoadDLL(const std::filesystem::path& dllPath)
 	// Create directories
 	std::filesystem::create_directories(m_copyPath);
 
-	const std::filesystem::path copyDllPath = m_copyPath / (dllName.string() + dllExtension);
+	const std::filesystem::path pdbPath = dllPath.parent_path() / (dllName.string() + ".pdb");
+	const std::filesystem::path libPath = dllPath.parent_path() / (dllName.string() + ".lib");
+	const std::filesystem::path lib2Path = dllPath.parent_path() / (dllName.string() + ".dll.a");
 
-	// Copy DLL to copy directory
-	std::filesystem::copy(dllPath, copyDllPath, std::filesystem::copy_options::overwrite_existing);
+	const std::filesystem::path copyDLLPath = m_copyPath / (dllName.string() + dllExtension);
+	const std::filesystem::path copyPDBPath = m_copyPath / (dllName.string() + pdbPath.extension().string());
+	const std::filesystem::path copyLIBPath = m_copyPath / (dllName.string() + libPath.extension().string());
+	const std::filesystem::path copyLIB2Path = m_copyPath / (dllName.string() + ".dll.a");
+
+	// Remove dll and dependent files
+	std::filesystem::remove(copyDLLPath);
+	std::filesystem::remove(copyPDBPath);
+	std::filesystem::remove(copyLIBPath);
+	std::filesystem::remove(copyLIB2Path);
+	// Copy dll and dependent files
+	std::filesystem::copy(dllPath, copyDLLPath, std::filesystem::copy_options::overwrite_existing);
+	std::filesystem::copy(pdbPath, copyPDBPath, std::filesystem::copy_options::overwrite_existing);
+	std::filesystem::copy(libPath, copyLIBPath, std::filesystem::copy_options::overwrite_existing);
+	std::filesystem::copy(lib2Path, copyLIB2Path, std::filesystem::copy_options::overwrite_existing);
 
 	// Load DLL
 #if defined(_WIN32)
-	m_handle = LoadLibrary(copyDllPath.generic_string().c_str());
+	m_handle = LoadLibrary(copyDLLPath.generic_string().c_str());
 #elif defined(__linux__)
 	handle = dlopen(DllPath.generic_string().c_str(), RTLD_LAZY);
 #endif
@@ -127,22 +124,20 @@ void ScriptEngine::ParseGenFile(const std::filesystem::path& headerPath)
 	Parser parser(headerPath);
 	const std::string className = parser["Class Name"];
 
-	using ScriptConstructor = void* (*)();
-	const auto constructor = GetDLLMethod<ScriptConstructor>(m_handle, ("Internal_Create_" + className).c_str());
-
+	const auto constructor = GetDLLMethod<Constructor>(m_handle, ("Internal_Create_" + className).c_str());
 	if (!constructor)
 	{
 		std::cerr << "Failed to get constructor" << std::endl;
 		return;
 	}
-	ComponentHandler::RegisterScriptComponent(static_cast<ScriptComponent*>(constructor()));
+
 	const auto scriptInstance = m_scriptInstances[className] = std::make_shared<ScriptInstance>();
+	scriptInstance->m_constructor = constructor;
 
 	const int propertySize = parser["Property Size"].As<int>();
 	for (int i = 0; i < propertySize; i++) {
-
-
 		parser.PushDepth();
+
 		const std::string typeName = parser["Type"];
 		const std::string varName = parser["Name"];
 
@@ -156,6 +151,16 @@ void ScriptEngine::ParseGenFile(const std::filesystem::path& headerPath)
 		variable.setterMethod = GetDLLMethod<SetterMethod>(m_handle, ("Internal_Set_" + className + "_" + property.propertyName).c_str());
 
 		scriptInstance->m_variables[property.propertyName] = variable;
+	}
+
+	const int methodSize = parser["Method Size"].As<int>();
+	for (int i = 0; i < methodSize; i++)
+	{
+		parser.PushDepth();
+
+		const std::string methodName = parser["Name"];
+
+		scriptInstance->m_methods[methodName] = GetDLLMethod<CallMethod>(m_handle, ("Internal_Call_" + className + "_" + methodName).c_str());
 	}
 }
 
