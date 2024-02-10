@@ -56,23 +56,33 @@ bool ScriptEngine::LoadDLL(const std::filesystem::path& dllPath)
 	const std::filesystem::path copyLIB2Path = m_copyPath / (dllName.string() + ".dll.a");
 
 	// Remove dll and dependent files
-	std::filesystem::remove(copyDLLPath);
-	std::filesystem::remove(copyPDBPath);
-	std::filesystem::remove(copyLIBPath);
-	std::filesystem::remove(copyLIB2Path);
+	if (std::filesystem::exists(copyDLLPath))
+		std::filesystem::remove(copyDLLPath);
+	if (std::filesystem::exists(copyPDBPath))
+		std::filesystem::remove(copyPDBPath);
+	if (std::filesystem::exists(copyLIBPath))
+		std::filesystem::remove(copyLIBPath);
+	if (std::filesystem::exists(copyLIB2Path))
+		std::filesystem::remove(copyLIB2Path);
 	// Copy dll and dependent files
-	std::filesystem::copy(dllPath, copyDLLPath, std::filesystem::copy_options::overwrite_existing);
-	std::filesystem::copy(pdbPath, copyPDBPath, std::filesystem::copy_options::overwrite_existing);
-	std::filesystem::copy(libPath, copyLIBPath, std::filesystem::copy_options::overwrite_existing);
-	std::filesystem::copy(lib2Path, copyLIB2Path, std::filesystem::copy_options::overwrite_existing);
+	if (std::filesystem::exists(dllPath))
+		std::filesystem::copy(dllPath, copyDLLPath);
+	if (std::filesystem::exists(pdbPath))
+		std::filesystem::copy(pdbPath, copyPDBPath);
+	if (std::filesystem::exists(libPath))
+		std::filesystem::copy(libPath, copyLIBPath);
+	if (std::filesystem::exists(lib2Path))
+		std::filesystem::copy(lib2Path, copyLIB2Path);
 
 	// Load DLL
 #if defined(_WIN32)
 	m_handle = LoadLibrary(copyDLLPath.generic_string().c_str());
+
 #elif defined(__linux__)
 	handle = dlopen(DllPath.generic_string().c_str(), RTLD_LAZY);
 #endif
 
+	std::cout << copyDLLPath.generic_string() << std::endl;
 	if (!m_handle)
 	{
 #if defined(_WIN32)
@@ -108,7 +118,7 @@ bool ScriptEngine::LoadDLL(const std::filesystem::path& dllPath)
 	return true;
 }
 
-void ScriptEngine::FreeDLL()
+void ScriptEngine::FreeDLL() const
 {
 	if (!m_handle)
 		return;

@@ -24,7 +24,7 @@ public:
 
 	bool LoadDLL(const std::filesystem::path& dllPath);
 
-	void FreeDLL();
+	void FreeDLL() const;
 
 	static ScriptEngine* Get() {
 		if (!m_instance)
@@ -54,8 +54,25 @@ private:
 		if (!instance->m_variables.contains(variableName))
 			return nullptr;
 
+		printf("LAED\n");
 		const auto getter = instance->m_variables.at(variableName).getterMethod;
+		if (getter == nullptr)
+			return nullptr;
 		return static_cast<T*>(getter(scriptComponent));
+	}
+
+	template<typename T>
+	inline void SetScriptVariable(void* scriptComponent, const std::string& scriptName, const std::string& variableName, T* value)
+	{
+		if (!scriptComponent || !m_scriptInstances.contains(scriptName))
+			return;
+
+		const auto instance = m_scriptInstances[scriptName];
+		if (!instance->m_variables.contains(variableName))
+			return;
+
+		const auto setter = instance->m_variables.at(variableName).setterMethod;
+		setter(scriptComponent, value);
 	}
 
 	inline std::unordered_map<std::string, Variable> GetAllScriptVariablesInfo(const std::string& scriptName)
@@ -91,20 +108,6 @@ private:
 		}
 
 		return variables;
-	}
-
-	template<typename T>
-	inline void SetScriptVariable(void* scriptComponent, const std::string& scriptName, const std::string& variableName, T* value)
-	{
-		if (!scriptComponent || !m_scriptInstances.contains(scriptName))
-			return;
-
-		const auto instance = m_scriptInstances[scriptName];
-		if (!instance->m_variables.contains(variableName))
-			return;
-
-		const auto setter = instance->m_variables.at(variableName).setterMethod;
-		setter(scriptComponent, value);
 	}
 
 	inline void CallScriptMethod(void* scriptComponent, const std::string& scriptName, const std::string& methodName)

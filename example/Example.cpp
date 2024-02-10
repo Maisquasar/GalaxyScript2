@@ -16,7 +16,7 @@ void Example::RunExample()
 {
 	const auto scriptEngine = ScriptEngine::Get();
 
-	//TODO:
+	// DLL ALWAYS NEED TO BE THE SAME BUILD MODE AS THE LIB
 	const char* dllPath = "D:/Code/Moteurs/ExampleProject/Generate/ExampleProject.dll";
 	const bool loaded = scriptEngine->LoadDLL(dllPath);
 
@@ -79,22 +79,25 @@ void Example::RunExample()
 	for (auto& name : names)
 		std::cout << '\t' << name << std::endl;
 	std::cout << std::endl;
-
 	return;
-
-
 }
 
-#define SAVE_TYPE(x) if (property.propertyType == #x)\
+#define SAVE_TYPE(x) if (_property.propertyType == #x)\
 	{\
-		const auto value = *scriptComponent->GetVariable<x>(property.propertyName);\
-		s_values[property.propertyName] = value;\
+		const auto value = scriptComponent->GetVariable<x>(_property.propertyName);\
+		if (value != nullptr)\
+		{\
+			s_values[_property.propertyName] = *value;\
+		}\
 }
 
-#define LOAD_TYPE(x) if (property.propertyType == #x)\
+#define LOAD_TYPE(x) if (_property.propertyType == #x)\
 	{\
-		const auto value = std::any_cast<x>(s_values[property.propertyName]);\
-		scriptComponent->SetVariable(property.propertyName, value);\
+		if (s_values.contains(_property.propertyName))\
+		{\
+			const auto value = std::any_cast<x>(s_values[_property.propertyName]);\
+			scriptComponent->SetVariable(_property.propertyName, value);\
+		}\
 	}
 
 std::unordered_map<std::string, std::any> s_values;
@@ -104,7 +107,7 @@ void SaveValues(ScriptComponent* scriptComponent)
 	std::cout << "Before Values" << std::endl;
 	for (auto& variable : variables)
 	{
-		auto property = variable.second.property;
+		auto _property = variable.second.property;
 		SAVE_TYPE(bool)
 else SAVE_TYPE(char)
 else SAVE_TYPE(int)
@@ -126,7 +129,7 @@ void LoadValues(ScriptComponent* scriptComponent)
 	std::cout << "After Values" << std::endl;
 	for (auto& variable : variables)
 	{
-		auto property = variable.second.property;
+		auto _property = variable.second.property;
 		LOAD_TYPE(bool)
 else LOAD_TYPE(char)
 else LOAD_TYPE(int)

@@ -27,8 +27,6 @@ target("GalaxyScript")
         add_cxflags("/permissive")
     end
 
-    add_defines("GALAXY_SCRIPT_EXPORT")
-
     -- Includes --
     add_includedirs("include")
     add_headerfiles("include/**.h");
