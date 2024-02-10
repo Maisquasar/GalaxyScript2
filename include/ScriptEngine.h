@@ -22,7 +22,7 @@ public:
 
 	static ScriptEngine& CreateScriptEngine();
 
-	bool LoadDLL(const std::filesystem::path& dllPath);
+	bool LoadDLL(std::filesystem::path dllPath);
 
 	void FreeDLL() const;
 
@@ -54,7 +54,6 @@ private:
 		if (!instance->m_variables.contains(variableName))
 			return nullptr;
 
-		printf("LAED\n");
 		const auto getter = instance->m_variables.at(variableName).getterMethod;
 		if (getter == nullptr)
 			return nullptr;

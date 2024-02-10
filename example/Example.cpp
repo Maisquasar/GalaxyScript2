@@ -8,6 +8,7 @@
 #include <vector>
 #include <any>
 #include <ranges>
+#include <stdexcept>
 
 void SaveValues(ScriptComponent* scriptComponent);
 void LoadValues(ScriptComponent* scriptComponent);
@@ -17,11 +18,15 @@ void Example::RunExample()
 	const auto scriptEngine = ScriptEngine::Get();
 
 	// DLL ALWAYS NEED TO BE THE SAME BUILD MODE AS THE LIB
+	#ifdef _WIN32
 	const char* dllPath = "D:/Code/Moteurs/ExampleProject/Generate/ExampleProject.dll";
+	#else
+	const char* dllPath = "/home/uwu/Documents/ExampleProject/Generate/ExampleProject";
+	#endif
 	const bool loaded = scriptEngine->LoadDLL(dllPath);
 
 	if (!loaded)
-		return;
+		throw std::runtime_error("Failed to load DLL");
 
 	// Create the script
 	std::shared_ptr<ScriptComponent> scriptComponent = scriptEngine->CreateWithClassName<ScriptComponent>("ExampleClass");
@@ -79,7 +84,6 @@ void Example::RunExample()
 	for (auto& name : names)
 		std::cout << '\t' << name << std::endl;
 	std::cout << std::endl;
-	return;
 }
 
 #define SAVE_TYPE(x) if (_property.propertyType == #x)\

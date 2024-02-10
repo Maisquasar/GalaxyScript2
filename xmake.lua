@@ -33,6 +33,10 @@ target("GalaxyScript")
     add_headerfiles("include/**.inl");
     add_files("src/**.cpp")
 
+    if (is_plat("linux")) then
+        add_cxxflags("-fPIC")  -- Usefull for linux
+    end
+
     if (is_plat("windows", "msvc")) then 
         add_cxflags("/permissive")
     end

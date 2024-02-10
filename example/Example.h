@@ -16,4 +16,8 @@ public:
 	void RunExample();
 };
 
+#ifdef _WIN32
 extern "C" __declspec(dllexport) void RandomMethod();
+#elif defined(__linux__)
+extern "C" __attribute__((visibility("default"))) void RandomMethod();
+#endif

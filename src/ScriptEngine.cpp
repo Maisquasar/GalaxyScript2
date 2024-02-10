@@ -26,13 +26,8 @@ ScriptEngine& ScriptEngine::CreateScriptEngine()
 	return *m_instance;
 }
 
-bool ScriptEngine::LoadDLL(const std::filesystem::path& dllPath)
+bool ScriptEngine::LoadDLL(std::filesystem::path dllPath)
 {
-	if (!std::filesystem::exists(dllPath)) {
-		std::cerr << "File not found: " << dllPath << std::endl;
-		return false;
-	}
-
 #if defined(_WIN32)
 	std::string dllExtension = ".dll";
 #elif defined(__linux__)
@@ -40,6 +35,14 @@ bool ScriptEngine::LoadDLL(const std::filesystem::path& dllPath)
 #elif defined(__APPLE__)
 	std::string dllExtension = ".dylib";
 #endif
+
+	dllPath = dllPath.generic_string() + dllExtension;
+
+	if (!std::filesystem::exists(dllPath))
+	{
+		std::cerr << "DLL not found" << std::endl;
+		return false;
+	}
 
 	const auto dllName = dllPath.filename().stem();
 
@@ -79,7 +82,7 @@ bool ScriptEngine::LoadDLL(const std::filesystem::path& dllPath)
 	m_handle = LoadLibrary(copyDLLPath.generic_string().c_str());
 
 #elif defined(__linux__)
-	handle = dlopen(DllPath.generic_string().c_str(), RTLD_LAZY);
+	m_handle = dlopen(copyDLLPath.generic_string().c_str(), RTLD_LAZY);
 #endif
 
 	std::cout << copyDLLPath.generic_string() << std::endl;
