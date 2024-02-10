@@ -10,16 +10,6 @@ using namespace CppSer;
 
 std::unique_ptr<ScriptEngine> ScriptEngine::m_instance;
 
-ScriptEngine::ScriptEngine()
-{
-
-}
-
-ScriptEngine::~ScriptEngine()
-{
-	std::cout << "ScriptEngine destroyed" << std::endl;
-}
-
 ScriptEngine& ScriptEngine::CreateScriptEngine()
 {
 	m_instance = std::make_unique<ScriptEngine>();
@@ -40,23 +30,23 @@ bool ScriptEngine::LoadDLL(std::filesystem::path dllPath)
 
 	if (!std::filesystem::exists(dllPath))
 	{
-		std::cerr << "DLL not found" << std::endl;
+		std::cerr << "DLL not found on " << dllPath << std::endl;
 		return false;
 	}
 
 	const auto dllName = dllPath.filename().stem();
 
 	// Create directories
-	std::filesystem::create_directories(m_copyPath);
+	std::filesystem::create_directories(m_copyPathFolder);
 
 	const std::filesystem::path pdbPath = dllPath.parent_path() / (dllName.string() + ".pdb");
 	const std::filesystem::path libPath = dllPath.parent_path() / (dllName.string() + ".lib");
 	const std::filesystem::path lib2Path = dllPath.parent_path() / (dllName.string() + ".dll.a");
 
-	const std::filesystem::path copyDLLPath = m_copyPath / (dllName.string() + dllExtension);
-	const std::filesystem::path copyPDBPath = m_copyPath / (dllName.string() + pdbPath.extension().string());
-	const std::filesystem::path copyLIBPath = m_copyPath / (dllName.string() + libPath.extension().string());
-	const std::filesystem::path copyLIB2Path = m_copyPath / (dllName.string() + ".dll.a");
+	const std::filesystem::path copyDLLPath = m_copyPathFolder / (dllName.string() + dllExtension);
+	const std::filesystem::path copyPDBPath = m_copyPathFolder / (dllName.string() + pdbPath.extension().string());
+	const std::filesystem::path copyLIBPath = m_copyPathFolder / (dllName.string() + libPath.extension().string());
+	const std::filesystem::path copyLIB2Path = m_copyPathFolder / (dllName.string() + ".dll.a");
 
 	// Remove dll and dependent files
 	if (std::filesystem::exists(copyDLLPath))
@@ -106,11 +96,11 @@ bool ScriptEngine::LoadDLL(std::filesystem::path dllPath)
 		return false;
 	}
 
-	const auto path = dllPath.parent_path() / "Headers";
-	if (!std::filesystem::exists(path))
+	if (!std::filesystem::exists(m_headerGenFolder)) {
+		std::cout << "Header Gen Folder " << m_headerGenFolder << " does not exist" << std::endl;
 		return false;
-	// Generated/file.dll so parent is Generated
-	for (const std::filesystem::directory_entry& entry : std::filesystem::directory_iterator(path))
+	}
+	for (const std::filesystem::directory_entry& entry : std::filesystem::directory_iterator(m_headerGenFolder))
 	{
 		if (entry.path().extension() == ".gen")
 		{
@@ -140,7 +130,7 @@ void ScriptEngine::ParseGenFile(const std::filesystem::path& headerPath)
 	const auto constructor = GetDLLMethod<Constructor>(m_handle, ("Internal_Create_" + className).c_str());
 	if (!constructor)
 	{
-		std::cerr << "Failed to get constructor" << std::endl;
+		std::cout << "Failed to get constructor of class " << className << std::endl;
 		return;
 	}
 

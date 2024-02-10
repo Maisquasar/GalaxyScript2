@@ -23,10 +23,14 @@ void Example::RunExample()
 	#else
 	const char* dllPath = "/home/uwu/Documents/ExampleProject/Generate/ExampleProject";
 	#endif
+	scriptEngine->SetCopyToFolder(std::filesystem::current_path() / "ProjectDLL");
+	scriptEngine->SetHeaderGenFolder(std::filesystem::path(dllPath).parent_path() / "Headers");
 	const bool loaded = scriptEngine->LoadDLL(dllPath);
 
-	if (!loaded)
-		throw std::runtime_error("Failed to load DLL");
+	if (!loaded) {
+		std::cout << "Failed to load DLL" << std::endl;
+		return;
+	}
 
 	// Create the script
 	std::shared_ptr<ScriptComponent> scriptComponent = scriptEngine->CreateWithClassName<ScriptComponent>("ExampleClass");
