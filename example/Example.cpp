@@ -19,7 +19,7 @@ void Example::RunExample()
 
 	// DLL ALWAYS NEED TO BE THE SAME BUILD MODE AS THE LIB
 	#ifdef _WIN32
-	const char* dllPath = "D:/Code/Moteurs/ExampleProject/Generate/ExampleProject.dll";
+	const char* dllPath = "D:/Code/Moteurs/ExampleProject/Generate/ExampleProject";
 	#else
 	const char* dllPath = "/home/uwu/Documents/ExampleProject/Generate/ExampleProject";
 	#endif
