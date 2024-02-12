@@ -152,6 +152,7 @@ public:
 		const auto method = instance->m_methods.at(methodName);
 		method(scriptComponent);
 }
+	std::unordered_map<std::string, std::shared_ptr<ScriptInstance>> GetAllScriptInstances() const { return m_scriptInstances; }
 private:
 	static ScriptEngine& CreateScriptEngine();
 

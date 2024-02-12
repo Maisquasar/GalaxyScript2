@@ -125,45 +125,55 @@ void ScriptEngine::FreeDLL() const
 void ScriptEngine::ParseGenFile(const std::filesystem::path& headerPath)
 {
 	Parser parser(headerPath);
-	const std::string className = parser["Class Name"];
 
-	const auto constructor = GetDLLMethod<Constructor>(m_handle, ("Internal_Create_" + className).c_str());
-	if (!constructor)
+	do
 	{
-		std::cout << "Failed to get constructor of class " << className << std::endl;
-		return;
-	}
+		const std::string className = parser["Class Name"];
 
-	const auto scriptInstance = m_scriptInstances[className] = std::make_shared<ScriptInstance>();
-	scriptInstance->m_constructor = constructor;
+		if (!className.empty())
+		{
+			// Parse class map
+			const auto constructor = GetDLLMethod<Constructor>(m_handle, ("Internal_Create_" + className).c_str());
+			if (!constructor)
+			{
+				std::cout << "Failed to get constructor of class " << className << std::endl;
+				return;
+			}
 
-	const int propertySize = parser["Property Size"].As<int>();
-	for (int i = 0; i < propertySize; i++) {
+			const auto scriptInstance = m_scriptInstances[className] = std::make_shared<ScriptInstance>();
+			scriptInstance->m_constructor = constructor;
+
+			const int propertySize = parser["Property Size"].As<int>();
+			for (int i = 0; i < propertySize; i++) {
+				parser.PushDepth();
+
+				const std::string typeName = parser["Type"];
+				const std::string varName = parser["Name"];
+
+				Property property;
+				property.propertyName = varName;
+				property.propertyType = typeName;
+
+				Variable variable;
+				variable.property = property;
+				variable.getterMethod = GetDLLMethod<GetterMethod>(m_handle, ("Internal_Get_" + className + "_" + property.propertyName).c_str());
+				variable.setterMethod = GetDLLMethod<SetterMethod>(m_handle, ("Internal_Set_" + className + "_" + property.propertyName).c_str());
+
+				scriptInstance->m_variables[property.propertyName] = variable;
+			}
+
+			const int methodSize = parser["Method Size"].As<int>();
+			for (int i = 0; i < methodSize; i++)
+			{
+				parser.PushDepth();
+
+				const std::string methodName = parser["Name"];
+
+				scriptInstance->m_methods[methodName] = GetDLLMethod<CallMethod>(m_handle, ("Internal_Call_" + className + "_" + methodName).c_str());
+			}
+		}
 		parser.PushDepth();
-
-		const std::string typeName = parser["Type"];
-		const std::string varName = parser["Name"];
-
-		Property property;
-		property.propertyName = varName;
-		property.propertyType = typeName;
-
-		Variable variable;
-		variable.property = property;
-		variable.getterMethod = GetDLLMethod<GetterMethod>(m_handle, ("Internal_Get_" + className + "_" + property.propertyName).c_str());
-		variable.setterMethod = GetDLLMethod<SetterMethod>(m_handle, ("Internal_Set_" + className + "_" + property.propertyName).c_str());
-
-		scriptInstance->m_variables[property.propertyName] = variable;
 	}
-
-	const int methodSize = parser["Method Size"].As<int>();
-	for (int i = 0; i < methodSize; i++)
-	{
-		parser.PushDepth();
-
-		const std::string methodName = parser["Name"];
-
-		scriptInstance->m_methods[methodName] = GetDLLMethod<CallMethod>(m_handle, ("Internal_Call_" + className + "_" + methodName).c_str());
-	}
+	while (parser.GetValueMap().size() != parser.GetCurrentDepth());
 }
 

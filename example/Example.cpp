@@ -32,6 +32,14 @@ void Example::RunExample()
 		return;
 	}
 
+	// Get all classes found
+	std::cout << "Classes found :" << std::endl;
+	for (auto& instance : scriptEngine->GetAllScriptInstances())
+	{
+		std::cout << '\t' << instance.first << std::endl;
+	}
+	std::cout << std::endl;
+
 	// Create the script
 	std::shared_ptr<ScriptComponent> scriptComponent = scriptEngine->CreateWithClassName<ScriptComponent>("ExampleClass");
 	if (!scriptComponent)
