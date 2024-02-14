@@ -174,6 +174,6 @@ void ScriptEngine::ParseGenFile(const std::filesystem::path& headerPath)
 		}
 		parser.PushDepth();
 	}
-	while (parser.GetValueMap().size() != parser.GetCurrentDepth());
+	while (parser.GetValueMap().size() > parser.GetCurrentDepth());
 }
 

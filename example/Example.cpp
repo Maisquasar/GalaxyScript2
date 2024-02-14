@@ -1,6 +1,5 @@
 #include "Example.h"
 
-
 #include "../include/ScriptEngine.h"
 #include "ScriptComponent.h"
 
@@ -19,7 +18,7 @@ void Example::RunExample()
 
 	// DLL ALWAYS NEED TO BE THE SAME BUILD MODE AS THE LIB
 	#ifdef _WIN32
-	const char* dllPath = "D:/Code/Moteurs/ExampleProject/Generate/ExampleProject";
+	const char* dllPath = "D:/Code/Scripting/ExampleProject/Generate/ExampleProject";
 	#else
 	const char* dllPath = "/home/uwu/Documents/ExampleProject/Generate/ExampleProject";
 	#endif
@@ -41,7 +40,7 @@ void Example::RunExample()
 	std::cout << std::endl;
 
 	// Create the script
-	std::shared_ptr<ScriptComponent> scriptComponent = scriptEngine->CreateWithClassName<ScriptComponent>("ExampleClass");
+	std::shared_ptr<ScriptComponent> scriptComponent = scriptEngine->CreateWithClassName<ScriptComponent>("AnotherClass");
 	if (!scriptComponent)
 		return;
 
@@ -71,6 +70,7 @@ void Example::RunExample()
 	std::cout << std::endl;
 
 	// Call a class method:
+	std::cout << "Calling Method named Method" << std::endl;
 	scriptComponent->CallMethodByName("Method");
 
 	std::cout << "Press enter to HotReload" << std::endl;
@@ -88,6 +88,7 @@ void Example::RunExample()
 	LoadValues(scriptComponent.get());
 
 	// Call a class method:
+	std::cout << "Calling Method named Method" << std::endl;
 	scriptComponent->CallMethodByName("Method");
 
 	const auto names = scriptComponent->Internal_GetClassNames();

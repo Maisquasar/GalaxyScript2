@@ -1,8 +1,10 @@
+#pragma once
 #include <iostream>
 #include <vector>
+#include <set>
 
 #ifdef _WIN32
-#define EXPORT_FUNC extern "C" __declspec(dllexport)
+#define EXPORT_FUNC extern "C" __declspec(dllexport) inline
 #elif defined(__linux__)
 #define EXPORT_FUNC extern "C" __attribute__((visibility("default")))
 #endif
