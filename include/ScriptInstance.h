@@ -9,6 +9,7 @@ using CallMethod = void (*)(void*);
 
 struct Property
 {
+	std::vector<std::string> propertyArgs;
 	std::string propertyName;
 	std::string propertyType;
 };

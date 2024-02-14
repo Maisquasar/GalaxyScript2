@@ -145,14 +145,17 @@ void ScriptEngine::ParseGenFile(const std::filesystem::path& headerPath)
 
 			const int propertySize = parser["Property Size"].As<int>();
 			for (int i = 0; i < propertySize; i++) {
+				Property property;
+
 				parser.PushDepth();
 
-				const std::string typeName = parser["Type"];
-				const std::string varName = parser["Name"];
+				const int argsSize = parser["Argument Size"].As<int>();
+				for (int j = 0; j < argsSize; j++) {
+					property.propertyArgs.push_back(parser["Argument " + std::to_string(j)]);
+				}
 
-				Property property;
-				property.propertyName = varName;
-				property.propertyType = typeName;
+				property.propertyName = parser["Name"];
+				property.propertyType = parser["Type"];
 
 				Variable variable;
 				variable.property = property;

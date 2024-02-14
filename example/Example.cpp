@@ -56,7 +56,12 @@ void Example::RunExample()
 			scriptComponent->SetVariable(property.propertyName, std::vector<std::string> {"Hello", "World"});
 		}
 
-		std::cout << '\t' << variable.property.propertyType << " " << variable.property.propertyName << std::endl;
+		std::cout << '\t' << variable.property.propertyType << " " << variable.property.propertyName;
+		for (const auto& value : variable.property.propertyArgs)
+		{
+			std::cout << ' ' << value;
+		}
+		std::cout << std::endl;
 	}
 	std::cout << std::endl;
 
