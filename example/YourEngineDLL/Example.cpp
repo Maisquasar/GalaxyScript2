@@ -1,6 +1,5 @@
 #include "Example.h"
 
-#include "../include/ScriptEngine.h"
 #include "ScriptComponent.h"
 
 #include <iostream>
@@ -8,6 +7,7 @@
 #include <any>
 #include <ranges>
 #include <stdexcept>
+#include <galaxyscript/ScriptEngine.h>
 
 void SaveValues(ScriptComponent* scriptComponent);
 void LoadValues(ScriptComponent* scriptComponent);
@@ -40,7 +40,7 @@ void Example::RunExample()
 	std::cout << std::endl;
 
 	// Create the script
-	std::shared_ptr<ScriptComponent> scriptComponent = scriptEngine->CreateWithClassName<ScriptComponent>("AnotherClass");
+	std::shared_ptr<ScriptComponent> scriptComponent = scriptEngine->CreateWithClassName<ScriptComponent>("ExampleClass");
 	if (!scriptComponent)
 		return;
 

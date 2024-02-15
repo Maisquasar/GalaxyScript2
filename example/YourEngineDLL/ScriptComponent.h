@@ -5,7 +5,7 @@
 #include <vector>
 #include <set>
 
-#include "../include/ScriptEngine.h"
+#include <galaxyscript/ScriptEngine.h>
 
 class IComponent
 {

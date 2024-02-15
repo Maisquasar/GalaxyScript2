@@ -18,7 +18,6 @@ add_cxflags("/wd4251", {tools = "cl"}) -- class needs to have dll-interface to b
 add_cxflags("-Wall")            -- Enable all commonly used warning flags
 
 set_rundir("$(projectdir)")
-set_targetdir("Generate")
 
 target("GalaxyScript")
     set_kind("static")
@@ -42,29 +41,4 @@ target("GalaxyScript")
     end
 
     add_packages("cpp_serializer")
-target_end()
-
-target("YourProjectDLL")
-    set_kind("shared")
-
-    add_deps("GalaxyScript")
-    add_includedirs("example")
-    add_files("example/Example.cpp")
-    add_files("example/ScriptComponent.cpp")
-    add_headerfiles("example/**.inl");
-    add_headerfiles("example/**.h");
-
-    add_links("GalaxyScript")
-    add_linkdirs("Generate")
-
-    add_defines("EXAMPLE_EXPORT")
-target_end()
-
-target("YourProjectBinary")
-    set_default(true)
-    set_kind("binary")
-    add_deps("YourProjectDLL")
-
-    add_includedirs("example")
-    add_files("example/main.cpp")
 target_end()
