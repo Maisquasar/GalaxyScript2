@@ -10,7 +10,7 @@ add_repositories("galaxy-repo https://github.com/GalaxyEngine/xmake-repo")
 -- Packages
 add_requires("galaxyscript")
 
-set_languages("c++17")
+set_languages("c++20")
 
 add_cxflags("/wd4251", {tools = "cl"}) -- diable warnings : class needs to have dll-interface to be used by clients of class
 add_cxflags("-Wall")            -- Enable all commonly used warning flags

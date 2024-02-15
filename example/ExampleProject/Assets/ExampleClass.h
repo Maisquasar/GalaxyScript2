@@ -6,8 +6,7 @@
 #include "ExampleClass.generated.h"
 
 CLASS()
-class ExampleClass : public ScriptComponent
-{
+class ExampleClass : public ScriptComponent {
 	GENERATED_BODY()
 public:
 	ExampleClass();
@@ -33,7 +32,6 @@ public:
 		std::cout << "Method from ExampleClass" << std::endl;
 	}
 };
-END_CLASS()
 
 
 CLASS()
@@ -54,6 +52,5 @@ public:
 	}
 
 };
-END_CLASS()
 
 END_FILE()
