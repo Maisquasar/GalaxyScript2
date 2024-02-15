@@ -85,7 +85,7 @@ END_FILE()
 
 ## Documentation
 
-Detailed documentation, including examples and API references, can be found on the [GalaxyScript Wiki](https://github.com/your_username/GalaxyScript/wiki).
+Detailed documentation, including examples and API references, can be found on the [GalaxyScript Wiki](https://github.com/GalaxyEngine/GalaxyScript/wiki).
 
 ## License
 
