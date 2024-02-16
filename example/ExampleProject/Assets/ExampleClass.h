@@ -5,28 +5,28 @@
 #include "ScriptComponent.h"
 #include "ExampleClass.generated.h"
 
-CLASS()
+GCLASS()
 class ExampleClass : public ScriptComponent {
 	GENERATED_BODY()
 public:
 	ExampleClass();
 
-	PROPERTY();
+	GPROPERTY();
 	int valueI = 0;
 
-	PROPERTY(HideInInspector, DisplayName = "Aled");
+	GPROPERTY(HideInInspector, DisplayName = "Aled");
 	double valueD = 0.0;
 
-	PROPERTY();
+	GPROPERTY();
 	ExampleClass* valueC;
 
-	PROPERTY();
+	GPROPERTY();
 	class ABCD* value2;
 
-	PROPERTY();
+	GPROPERTY();
 	std::vector<int> value3;
 public:
-	FUNCTION();
+	GFUNCTION();
 	void Method()
 	{
 		std::cout << "Method from ExampleClass" << std::endl;
@@ -34,18 +34,18 @@ public:
 };
 
 
-CLASS()
+GCLASS()
 class AnotherClass : public ExampleClass
 {
 	GENERATED_BODY()
 public:
 	AnotherClass();
 
-	PROPERTY();
+	GPROPERTY();
 	int value = 0;
 public:
 
-	FUNCTION();
+	GFUNCTION();
 	void Method()
 	{
 		std::cout << "Method from AnotherClass" << std::endl;

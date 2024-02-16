@@ -8,7 +8,7 @@ end
 -- Custom repo
 add_repositories("galaxy-repo https://github.com/GalaxyEngine/xmake-repo")
 -- Packages
-add_requires("galaxyscript")
+add_requires("galaxyscript v1.0-galaxyengine")
 
 set_languages("c++20")
 
