@@ -13,9 +13,7 @@
 #define BODY_MACRO_COMBINE(A,B,C,D) BODY_MACRO_COMBINE_INNER(A,B,C,D)
 
 #define GENERATED_BODY(...) BODY_MACRO_COMBINE(CURRENT_FILE_ID,_,__LINE__,_GENERATED_BODY)
-#define PROPERTY(...)
-#define FUNCTION(...)
-#define CLASS()
-#define END_CLASS()
-#define ENUM()
+#define GPROPERTY(...)
+#define GFUNCTION(...)
+#define GCLASS()
 #define END_FILE()
