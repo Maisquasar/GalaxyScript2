@@ -7,6 +7,7 @@
 
 #include <cpp_serializer/CppSerializer.h>
 using namespace CppSer;
+using namespace GS;
 
 std::unique_ptr<ScriptEngine> ScriptEngine::m_instance;
 
@@ -18,6 +19,8 @@ ScriptEngine& ScriptEngine::CreateScriptEngine()
 
 bool ScriptEngine::LoadDLL(std::filesystem::path dllPath)
 {
+	m_headerFilesName.clear();
+
 #if defined(_WIN32)
 	std::string dllExtension = ".dll";
 #elif defined(__linux__)
@@ -100,15 +103,38 @@ bool ScriptEngine::LoadDLL(std::filesystem::path dllPath)
 		std::cout << "Header Gen Folder " << m_headerGenFolder << " does not exist" << std::endl;
 		return false;
 	}
+
+	UpdateHeaders(true);
+
+	return true;
+}
+
+void ScriptEngine::UpdateHeaders(bool force /*= false*/)
+{
 	for (const std::filesystem::directory_entry& entry : std::filesystem::directory_iterator(m_headerGenFolder))
 	{
-		if (entry.path().extension() == ".gen")
+		std::string filename = entry.path().filename().stem().string();
+		if (entry.path().extension() == ".gen" && (!force && m_headerFilesName.contains(filename) || force))
 		{
+			m_headerFilesName.insert(filename);
 			ParseGenFile(entry.path());
 		}
 	}
+}
 
-	return true;
+void ScriptEngine::AddHeaders(const std::string& headerName)
+{
+	for (const std::filesystem::directory_entry& entry : std::filesystem::directory_iterator(m_headerGenFolder))
+	{
+		if (entry.path().filename().stem().string() != headerName)
+			continue;
+		std::string filename = entry.path().filename().stem().string();
+		if (entry.path().extension() == ".gen")
+		{
+			m_headerFilesName.insert(filename);
+			ParseGenFile(entry.path());
+		}
+	}
 }
 
 void ScriptEngine::FreeDLL() const
@@ -125,7 +151,6 @@ void ScriptEngine::FreeDLL() const
 void ScriptEngine::ParseGenFile(const std::filesystem::path& headerPath)
 {
 	Parser parser(headerPath);
-
 	do
 	{
 		const std::string className = parser["Class Name"];
@@ -151,18 +176,18 @@ void ScriptEngine::ParseGenFile(const std::filesystem::path& headerPath)
 
 				const int argsSize = parser["Argument Size"].As<int>();
 				for (int j = 0; j < argsSize; j++) {
-					property.propertyArgs.push_back(parser["Argument " + std::to_string(j)]);
+					property.args.push_back(parser["Argument " + std::to_string(j)]);
 				}
 
-				property.propertyName = parser["Name"];
-				property.propertyType = parser["Type"];
+				property.name = parser["Name"];
+				property.type = parser["Type"];
 
 				Variable variable;
 				variable.property = property;
-				variable.getterMethod = GetDLLMethod<GetterMethod>(m_handle, ("Internal_Get_" + className + "_" + property.propertyName).c_str());
-				variable.setterMethod = GetDLLMethod<SetterMethod>(m_handle, ("Internal_Set_" + className + "_" + property.propertyName).c_str());
+				variable.getterMethod = GetDLLMethod<GetterMethod>(m_handle, ("Internal_Get_" + className + "_" + property.name).c_str());
+				variable.setterMethod = GetDLLMethod<SetterMethod>(m_handle, ("Internal_Set_" + className + "_" + property.name).c_str());
 
-				scriptInstance->m_variables[property.propertyName] = variable;
+				scriptInstance->m_variables[property.name] = variable;
 			}
 
 			const int methodSize = parser["Method Size"].As<int>();
@@ -180,3 +205,42 @@ void ScriptEngine::ParseGenFile(const std::filesystem::path& headerPath)
 	while (parser.GetValueMap().size() > parser.GetCurrentDepth());
 }
 
+
+
+
+void* ScriptEngine::GetScriptVariable(void* scriptComponent, const std::string& scriptName, const std::string& variableName)
+{
+	if (!scriptComponent || !m_scriptInstances.contains(scriptName)) {
+		std::cout << "Failed to get script instance of " << scriptName << std::endl;
+		return nullptr;
+	}
+
+	const auto instance = m_scriptInstances[scriptName];
+	if (!instance->m_variables.contains(variableName)) {
+		std::cout << "Failed to get variable " << variableName << " of class " << scriptName << std::endl;
+		return nullptr;
+	}
+
+	const auto getter = instance->m_variables.at(variableName).getterMethod;
+	if (getter == nullptr)
+		return nullptr;
+	return getter(scriptComponent);
+}
+
+void ScriptEngine::SetScriptVariable(void* scriptComponent, const std::string& scriptName, const std::string& variableName, void* value)
+{
+	if (!scriptComponent || !m_scriptInstances.contains(scriptName)) {
+		std::cout << "Failed to get script instance of " << scriptName << std::endl;
+		return;
+	}
+
+	const auto instance = m_scriptInstances[scriptName];
+	if (!instance->m_variables.contains(variableName))
+	{
+		std::cout << "Failed to get variable " << variableName << " of class " << scriptName << std::endl;
+		return;
+	}
+
+	const auto setter = instance->m_variables.at(variableName).setterMethod;
+	setter(scriptComponent, value);
+}

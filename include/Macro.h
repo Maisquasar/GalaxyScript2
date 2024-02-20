@@ -1,7 +1,4 @@
 #pragma once
-#include <iostream>
-#include <vector>
-#include <set>
 
 #ifdef _WIN32
 #define EXPORT_FUNC extern "C" __declspec(dllexport) inline

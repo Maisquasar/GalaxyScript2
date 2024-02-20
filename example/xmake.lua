@@ -10,7 +10,7 @@ set_languages("c++20")
 -- Custom repo
 add_repositories("galaxy-repo https://github.com/GalaxyEngine/xmake-repo")
 -- Packages
-add_requires("galaxyscript v1.0-galaxyengine")
+add_requires("galaxyscript v1.1-galaxyengine")
 
 
 set_rundir("$(projectdir)")

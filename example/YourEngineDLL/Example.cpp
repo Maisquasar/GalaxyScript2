@@ -14,7 +14,7 @@ void LoadValues(ScriptComponent* scriptComponent);
 
 void Example::RunExample()
 {
-	const auto scriptEngine = ScriptEngine::Get();
+	const auto scriptEngine = GS::ScriptEngine::Get();
 
 	// DLL ALWAYS NEED TO BE THE SAME BUILD MODE AS THE LIB
 	#ifdef _WIN32
@@ -51,13 +51,13 @@ void Example::RunExample()
 	{
 		auto property = variable.property;
 
-		if (property.propertyType == "std::vector<std::string>")
+		if (property.type == "std::vector<std::string>")
 		{
-			scriptComponent->SetVariable(property.propertyName, std::vector<std::string> {"Hello", "World"});
+			scriptComponent->SetVariable(property.name, std::vector<std::string> {"Hello", "World"});
 		}
 
-		std::cout << '\t' << variable.property.propertyType << " " << variable.property.propertyName;
-		for (const auto& value : variable.property.propertyArgs)
+		std::cout << '\t' << variable.property.type << " " << variable.property.name;
+		for (const auto& value : variable.property.args)
 		{
 			std::cout << ' ' << value;
 		}
@@ -104,21 +104,21 @@ void Example::RunExample()
 	std::cout << std::endl;
 }
 
-#define SAVE_TYPE(x) if (_property.propertyType == #x)\
+#define SAVE_TYPE(x) if (_property.type == #x)\
 	{\
-		const auto value = scriptComponent->GetVariable<x>(_property.propertyName);\
+		const auto value = scriptComponent->GetVariable<x>(_property.name);\
 		if (value != nullptr)\
 		{\
-			s_values[_property.propertyName] = *value;\
+			s_values[_property.name] = *value;\
 		}\
 }
 
-#define LOAD_TYPE(x) if (_property.propertyType == #x)\
+#define LOAD_TYPE(x) if (_property.type == #x)\
 	{\
-		if (s_values.contains(_property.propertyName))\
+		if (s_values.contains(_property.name))\
 		{\
-			const auto value = std::any_cast<x>(s_values[_property.propertyName]);\
-			scriptComponent->SetVariable(_property.propertyName, value);\
+			const auto value = std::any_cast<x>(s_values[_property.name]);\
+			scriptComponent->SetVariable(_property.name, value);\
 		}\
 	}
 

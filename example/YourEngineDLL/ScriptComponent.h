@@ -5,8 +5,7 @@
 #include <vector>
 #include <set>
 
-#include <galaxyscript/ScriptEngine.h>
-
+#include "D:\Code\Moteurs\GalaxyScript\include\ScriptEngine.h"
 class IComponent
 {
 public:
@@ -44,20 +43,20 @@ public:
 	template<typename T>
 	inline T* GetVariable(const std::string& variableName)
 	{
-		return ScriptEngine::Get()->GetScriptVariable<T>(this, Internal_GetClassName(), variableName);
+		return GS::ScriptEngine::Get()->GetScriptVariable<T>(this, Internal_GetClassName(), variableName);
 	}
 
 	template<typename T>
 	inline void SetVariable(const std::string& variableName, T value)
 	{
-		return ScriptEngine::Get()->SetScriptVariable<T>(this, Internal_GetClassName(), variableName, &value);
+		return GS::ScriptEngine::Get()->SetScriptVariable<T>(this, Internal_GetClassName(), variableName, &value);
 	}
 
 	inline void CallMethodByName(const std::string& methodName)
 	{
-		ScriptEngine::Get()->CallScriptMethod(this, Internal_GetClassName(), methodName);
+		GS::ScriptEngine::Get()->CallScriptMethod(this, Internal_GetClassName(), methodName);
 	}
 
-	std::unordered_map<std::string, Variable> GetAllVariableInfo() const;
-	std::unordered_map<std::string, CallMethod> GetAllMethodsInfo() const;
+	std::unordered_map<std::string, GS::Variable> GetAllVariableInfo() const;
+	std::unordered_map<std::string, GS::CallMethod> GetAllMethodsInfo() const;
 };
