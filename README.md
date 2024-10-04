@@ -11,7 +11,7 @@ GalaxyScript is a powerful scripting library designed for C++ development, parti
 
 1. Clone the GalaxyScript repository.
    ```bash
-   git clone https://github.com/your_username/GalaxyScript.git
+   git clone https://github.com/GalaxyEngine/GalaxyScript.git
    ```
 
 2. Build the library using xmake base on your config e.g for windows with msvc :  
