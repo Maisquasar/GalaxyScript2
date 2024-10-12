@@ -17,7 +17,7 @@ ScriptEngine& ScriptEngine::CreateScriptEngine()
 	return *m_instance;
 }
 
-bool ScriptEngine::LoadDLL(std::filesystem::path dllPath)
+bool ScriptEngine::LoadDLL(std::filesystem::path dllPath, bool copyDll /*= true*/)
 {
 	m_headerFilesName.clear();
 
@@ -37,48 +37,50 @@ bool ScriptEngine::LoadDLL(std::filesystem::path dllPath)
 		return false;
 	}
 
-	const auto dllName = dllPath.filename().stem();
+	const std::string dllName = dllPath.filename().stem().string();
 
-	// Create directories
-	std::filesystem::create_directories(m_copyPathFolder);
+	const std::filesystem::path copyDLLPath = copyDll ? m_copyPathFolder / (dllName + dllExtension) : dllPath;
+	if (copyDll)
+	{
+		// Create directories
+		std::filesystem::create_directories(m_copyPathFolder);
 
-	const std::filesystem::path pdbPath = dllPath.parent_path() / (dllName.string() + ".pdb");
-	const std::filesystem::path libPath = dllPath.parent_path() / (dllName.string() + ".lib");
-	const std::filesystem::path lib2Path = dllPath.parent_path() / (dllName.string() + ".dll.a");
+		const std::filesystem::path pdbPath = dllPath.parent_path() / (dllName + ".pdb");
+		const std::filesystem::path libPath = dllPath.parent_path() / (dllName + ".lib");
+		const std::filesystem::path lib2Path = dllPath.parent_path() / (dllName + ".dll.a");
 
-	const std::filesystem::path copyDLLPath = m_copyPathFolder / (dllName.string() + dllExtension);
-	const std::filesystem::path copyPDBPath = m_copyPathFolder / (dllName.string() + pdbPath.extension().string());
-	const std::filesystem::path copyLIBPath = m_copyPathFolder / (dllName.string() + libPath.extension().string());
-	const std::filesystem::path copyLIB2Path = m_copyPathFolder / (dllName.string() + ".dll.a");
+		const std::filesystem::path copyPDBPath = m_copyPathFolder / (dllName + pdbPath.extension().string());
+		const std::filesystem::path copyLIBPath = m_copyPathFolder / (dllName + libPath.extension().string());
+		const std::filesystem::path copyLIB2Path = m_copyPathFolder / (dllName + ".dll.a");
 
-	// Remove dll and dependent files
-	if (std::filesystem::exists(copyDLLPath))
-		std::filesystem::remove(copyDLLPath);
-	if (std::filesystem::exists(copyPDBPath))
-		std::filesystem::remove(copyPDBPath);
-	if (std::filesystem::exists(copyLIBPath))
-		std::filesystem::remove(copyLIBPath);
-	if (std::filesystem::exists(copyLIB2Path))
-		std::filesystem::remove(copyLIB2Path);
-	// Copy dll and dependent files
-	if (std::filesystem::exists(dllPath))
-		std::filesystem::copy(dllPath, copyDLLPath);
-	if (std::filesystem::exists(pdbPath))
-		std::filesystem::copy(pdbPath, copyPDBPath);
-	if (std::filesystem::exists(libPath))
-		std::filesystem::copy(libPath, copyLIBPath);
-	if (std::filesystem::exists(lib2Path))
-		std::filesystem::copy(lib2Path, copyLIB2Path);
+		// Remove dll and dependent files
+		if (std::filesystem::exists(copyDLLPath))
+			std::filesystem::remove(copyDLLPath);
+		if (std::filesystem::exists(copyPDBPath))
+			std::filesystem::remove(copyPDBPath);
+		if (std::filesystem::exists(copyLIBPath))
+			std::filesystem::remove(copyLIBPath);
+		if (std::filesystem::exists(copyLIB2Path))
+			std::filesystem::remove(copyLIB2Path);
+		// Copy dll and dependent files
+		if (std::filesystem::exists(dllPath))
+			std::filesystem::copy(dllPath, copyDLLPath);
+		if (std::filesystem::exists(pdbPath))
+			std::filesystem::copy(pdbPath, copyPDBPath);
+		if (std::filesystem::exists(libPath))
+			std::filesystem::copy(libPath, copyLIBPath);
+		if (std::filesystem::exists(lib2Path))
+			std::filesystem::copy(lib2Path, copyLIB2Path);
+	}
 
 	// Load DLL
 #if defined(_WIN32)
 	m_handle = LoadLibrary(copyDLLPath.generic_string().c_str());
-
-#elif defined(__linux__)
+#elif defined(__linux__) || defined(__APPLE__)
 	m_handle = dlopen(copyDLLPath.generic_string().c_str(), RTLD_LAZY);
 #endif
 
-	std::cout << copyDLLPath.generic_string() << std::endl;
+	std::cout << copyDLLPath.generic_string() << "\n";
 	if (!m_handle)
 	{
 #if defined(_WIN32)
@@ -89,18 +91,18 @@ bool ScriptEngine::LoadDLL(std::filesystem::path dllPath)
 			const size_t size = FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
 				nullptr, errorMessageID, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&messageBuffer, 0, NULL);
 
-			std::cerr << std::string(messageBuffer, size) << std::endl;
+			std::cerr << std::string(messageBuffer, size) << "\n";
 
 			LocalFree(messageBuffer);
 		}
-#elif defined(__linux__)
-		std::cerr << dlerror() << std::endl;
+#elif defined(__linux__) || defined(__APPLE__)
+		std::cerr << dlerror() << "\n";
 #endif
 		return false;
 	}
 
 	if (!std::filesystem::exists(m_headerGenFolder)) {
-		std::cout << "Header Gen Folder " << m_headerGenFolder << " does not exist" << std::endl;
+		std::cout << "Header Gen Folder " << m_headerGenFolder << " does not exist" << "\n";
 		return false;
 	}
 
@@ -143,7 +145,7 @@ void ScriptEngine::FreeDLL() const
 		return;
 #if defined(_WIN32)
 	FreeLibrary((HMODULE)m_handle);
-#elif defined(__linux__)
+#elif defined(__linux__) || defined(__APPLE__)
 	dlclose(m_handle);
 #endif
 }

@@ -22,7 +22,9 @@ namespace GS
 	public:
 		ScriptEngine() = default;
 
-		bool LoadDLL(std::filesystem::path dllPath);
+		// Load the dll
+		// If copyDll is true, will copy the dll in the copy folder set by SetCopyFolder
+		bool LoadDLL(std::filesystem::path dllPath, bool copyDll = true);
 
 		void FreeDLL() const;
 
